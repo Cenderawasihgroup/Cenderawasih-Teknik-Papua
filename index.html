@@ -226,6 +226,7 @@ function renderAtt(){
     else if(r.leave){if(r.leave==='sick')Sk++;else Iz++;b='<span class="bl"><b>'+(r.leave==='sick'?'Sakit':'Izin')+'</b></span>';dt=r.note?esc(r.note):'';nb=(r.proof?'<br><button class="s sm" data-pf="'+esc(id+'|'+vd)+'">📎 Lihat bukti</button>':'')+'<br><button class="x sm" data-d="'+esc(id+'|'+vd)+'">Hapus catatan</button>'}
     else if(!work){b='<span class="mu">Libur</span>'}
     else{Ab++;b=isT?'<span class="mu">Belum masuk</span>':'<span class="late"><b>Alpa</b></span>'}
+    dt+=edTxt(r,dt);
     h+='<div class="r"><span><b>'+esc(nameOf(id))+'</b>'+(dt?'<small>'+dt+'</small>':'')+'</span><span style="text-align:right">'+b+nb+'</span></div>'});
   function sc(c,n,l){return'<div class="chip '+c+'"><b>'+n+'</b>'+l+'</div>'}
   $('#chips').innerHTML='<div class="grp"><div class="gh">Hadir</div><div class="gs">'+sc('p',P-Lt,'Tepat waktu')+sc('l',Lt,'Terlambat')+'</div><div class="gt">Total <b>'+P+'</b></div></div><div class="grp"><div class="gh">Alpa</div><div class="gs">'+sc('a',Ab,'No info')+sc('i',Sk,'Sakit')+sc('i',Iz,'Izin')+'</div><div class="gt">Total <b>'+(Ab+Sk+Iz)+'</b></div></div>';
@@ -298,12 +299,16 @@ async function saveEd(){var e=ed;if(!e)return;var old=(recs[e.id]||{})[e.k]||{},
     rec.manual=(tin!==old.in||tout!==(old.out||null))?true:(old.manual||null)}
   else if(e.st==='sakit'||e.st==='izin'){rec.in=null;rec.out=null;rec.leave=e.st==='sakit'?'sick':'other';rec.note=e.note.trim();rec.lnote='';rec.onote='';rec.site=null;rec.dist=null;rec.manual=null}
   else{rec.in=null;rec.out=null;rec.leave='';rec.note='';rec.lnote='';rec.onote='';rec.site=null;rec.dist=null;rec.manual=null}
+  try{rec.editAt=await A.now()}catch(x){rec.editAt=Date.now()}rec.editBy='owner';
   try{await A.setRec(e.id+'_'+e.k,rec);if(ed===e){ed=null;edMsg=''}}catch(x){edMsg='Gagal menyimpan: '+(x.message||x)}
   drawMonth(true)}
+function fdt(t){var d=new Date(t),p=function(n){return String(n).padStart(2,'0')};return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes())}
+function edTxt(r,dt){return r.editAt?(dt?' · ':'')+'<i>Diedit owner: '+fdt(r.editAt)+'</i>':''}
 function dayRow(id,k,r,s,td){var dt='',open=ed&&ed.id===id&&ed.k===k,b='<span class="'+(s==='hadir'?'ok':s==='telat'?'wn':s==='alpa'?'late':s==='sakit'||s==='izin'?'bl':'mu')+'"><b>'+SL[s]+'</b></span>';
   if(r.in){dt='Masuk '+hm(r.in)+(r.out?' · Pulang '+hm(r.out)+(isEarly(r.out)?' <span class="late">(pulang cepat)</span>':'')+' · '+((r.out-r.in)/3600000).toFixed(1)+' jam':(k===td?' · masih bekerja':' · tidak check-out'))+(r.site?' · '+esc(r.site):'')+(r.dist!=null?' · '+r.dist+' m dari lokasi':'')+(r.selfie?' <button class="s sm noprint" data-pf="'+esc(r.wid)+'|'+esc(r.date)+'">📷</button>':'');
     if(s==='telat'&&r.lnote)dt+='<br>Alasan: '+esc(r.lnote);if(r.out&&isEarly(r.out)&&r.onote)dt+='<br>Alasan pulang cepat: '+esc(r.onote);if(r.manual)dt+=' · <i>diubah manual</i>'}
   else if(r.leave)dt=(r.note?esc(r.note):'Tidak ada alasan')+(r.proof?' <button class="s sm noprint" data-pf="'+esc(id+'|'+k)+'">📎 Bukti</button>':'');
+  dt+=edTxt(r,dt);
   return'<div class="dy s-'+s+'"><div class="dh"><span><b>'+k.slice(8)+' '+DW[new Date(k+'T00:00:00').getDay()]+'</b> · '+b+(dt?'<small>'+dt+'</small>':'')+'</span>'
     +(open?'<button class="s sm noprint" data-cn="1">Tutup</button>':'<button class="s sm noprint" data-ed="'+esc(id+'|'+k)+'">Ubah</button>')+'</div>'+(open?editor():'')+'</div>'}
 var BLN=['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'],PEMBUAT='ADINDA FADHILLAH';
@@ -510,9 +515,9 @@ function allRecs(){var list=[];Object.keys(recs).forEach(function(w){Object.keys
   list.sort(function(x,y){return x.date<y.date?-1:x.date>y.date?1:nameOf(x.wid)<nameOf(y.wid)?-1:1});return list}
 function dl(name,text,type){var u=URL.createObjectURL(new Blob([text],{type:type})),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000)}
 $('#exc').onclick=function(){
-  var rows=['tanggal,pekerja,lokasi,jam masuk,jam pulang,terlambat,pulang cepat,jam kerja,izin,catatan,alasan terlambat,alasan pulang cepat'],list=allRecs();
-  list.forEach(function(r){if(!(r.in||r.leave||r.lnote||r.onote))return;
-    rows.push([r.date,nameOf(r.wid),r.site||'',r.in?hm(r.in):'',r.out?hm(r.out):'',r.in&&isLate(r.in)?'ya':'tidak',r.out&&isEarly(r.out)?'ya':'tidak',r.in&&r.out?((r.out-r.in)/3600000).toFixed(2):'',r.leave==='sick'?'sakit':r.leave?'izin lain':'',r.note||'',r.lnote||'',r.onote||''].map(csv).join(','))});
+  var rows=['tanggal,pekerja,lokasi,jam masuk,jam pulang,terlambat,pulang cepat,jam kerja,izin,catatan,alasan terlambat,alasan pulang cepat,diedit terakhir'],list=allRecs();
+  list.forEach(function(r){if(!(r.in||r.leave||r.lnote||r.onote||r.editAt))return;
+    rows.push([r.date,nameOf(r.wid),r.site||'',r.in?hm(r.in):'',r.out?hm(r.out):'',r.in&&isLate(r.in)?'ya':'tidak',r.out&&isEarly(r.out)?'ya':'tidak',r.in&&r.out?((r.out-r.in)/3600000).toFixed(2):'',r.leave==='sick'?'sakit':r.leave?'izin lain':'',r.note||'',r.lnote||'',r.onote||'',r.editAt?fdt(r.editAt):''].map(csv).join(','))});
   dl('absensi-'+ds(new Date())+'.csv','\ufeff'+rows.join('\r\n'),'text/csv;charset=utf-8');st('#exst','File Excel (CSV) diunduh: '+(rows.length-1)+' baris.','ok')};
 $('#exj').onclick=function(){
   var d={app:'worker-attendance',exported:new Date().toISOString(),sites:cfg.sites,lateAfter:cfg.lateAfter,outAfter:cfg.outAfter,outBlock:cfg.outBlock,workers:cfg.workers,gone:cfg.gone||{},week:cfg.week,records:allRecs()};
