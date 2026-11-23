@@ -350,6 +350,15 @@ function drawMonth(force){
 }
 
 var DEFW=['Adinda Fadhillah','Sofyan','Jonathan','Haikal','Van Basten Bubre','Rikarth Doom','David','Riyo Setiyawan','Adolof','Nur Alamsyah','Ismail','Apson','Irvan','Junaedi Elungan','Benji','Syukur','Andrew'].map(function(n,i){return{id:'w'+(i+1)+n.toLowerCase().replace(/[^a-z]/g,'').slice(0,8),name:n,o:i+1}});
+function askPin(title){return new Promise(function(res){
+  var o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  o.innerHTML='<div class="card" style="width:100%;max-width:340px;margin:0"><h2>'+esc(title)+'</h2><input type="password" autocomplete="off" style="width:100%"><div class="row" style="margin-top:10px"><button class="s" data-x>Batal</button><button data-ok>OK</button></div></div>';
+  document.body.appendChild(o);var i=o.querySelector('input');
+  function done(v){i.blur();o.remove();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();res(v)}
+  o.querySelector('[data-x]').onclick=function(){done(null)};
+  o.querySelector('[data-ok]').onclick=function(){done(i.value)};
+  i.onkeydown=function(e){if(e.key==='Enter')done(i.value)};
+  setTimeout(function(){i.focus()},50)})}
 function hp(id,p){return sha(id+':'+p)}
 function gate(selfie){return new Promise(function(res){
   var o=document.createElement('div'),sm=null;o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
@@ -418,10 +427,11 @@ $('#pin').onclick=function(){punch('in')};$('#pout').onclick=function(){punch('o
 $('#login').onclick=async function(){
   if(isAdmin){isAdmin=false;tab='in';try{sessionStorage.removeItem('adm')}catch(e){}return render()}
   if(!cfgReady){alert(cfgErr?'Tidak dapat membaca data dari server: '+cfgErr:'Data masih dimuat dari server. Tunggu beberapa detik lalu coba lagi.');return}
-  var p=prompt(cfg.pin?'PIN Owner:':'Buat PIN owner (untuk login):');if(!p)return;
+  var p=await askPin(cfg.pin?'PIN Owner':'Buat PIN owner (untuk login)');if(!p)return;
   var h=await sha(p);
   if(!cfg.pin){cfg.pin=h;await save()}else if(h!==cfg.pin){alert('PIN salah');return}
   isAdmin=true;tab='att';try{sessionStorage.setItem('adm','1');sessionStorage.setItem('tab',tab)}catch(e){}render();
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
 };
 function setPin(lat,lng){
   $('#lat').value=lat.toFixed(6);$('#lng').value=lng.toFixed(6);$('#gm').href='https://www.google.com/maps?q='+lat+','+lng;
