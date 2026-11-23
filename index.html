@@ -152,7 +152,14 @@ input:focus,select:focus{outline:2px solid var(--ac);border-color:var(--ac)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
-var FIREBASE_CONFIG = null; // GANTI: tempel firebaseConfig project Firebase BARU milik PT. Cenderawasih Teknik Papua di sini (lihat petunjuk di atas). null = mode demo.
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBeu3iyhA0t6CxTGPupu8vRsXCC6esCCpQ",
+  authDomain: "cenderawasih-teknik-papua.firebaseapp.com",
+  projectId: "cenderawasih-teknik-papua",
+  storageBucket: "cenderawasih-teknik-papua.firebasestorage.app",
+  messagingSenderId: "244523270056",
+  appId: "1:244523270056:web:bc0ad850bda78087cce79d"
+}; // GANTI: tempel firebaseConfig project Firebase BARU milik PT. Cenderawasih Teknik Papua di sini (lihat petunjuk di atas). null = mode demo.
 /* Contoh bentuk:
 var FIREBASE_CONFIG = {
   apiKey: "...",
