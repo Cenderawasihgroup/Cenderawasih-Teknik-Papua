@@ -212,7 +212,7 @@ function pos(){return new Promise(function(a,b){if(!navigator.geolocation)return
 function st(id,t,c){var e=$(id);e.textContent=t;e.className='st '+(c||'')}
 function gerr(e){return e&&e.code===1?'Izin lokasi ditolak. Mohon izinkan akses lokasi lalu coba lagi.':(e&&e.message)||'Tidak dapat mengambil posisi GPS Anda.'}
 function sha(s){if(!window.crypto||!crypto.subtle)return Promise.resolve('p:'+s);return crypto.subtle.digest('SHA-256',new TextEncoder().encode('att:'+s)).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')})}
-function save(id,ok){render();if(id)st(id,'Menyimpan…');return A.setCfg(cfg).then(function(){render();if(id)st(id,ok,'ok')}).catch(function(e){st(id||'#st','Gagal menyimpan: '+(e.message||e),'bad')})}
+function save(id,ok){render();if(id)st(id,'Menyimpan…');return A.setCfg(cfg).then(function(){render();if(id)st(id,ok,'ok')}).catch(function(e){var m='Gagal menyimpan ke server: '+(e.code?e.code+' - ':'')+(e.message||e)+'. Data TIDAK tersimpan dan akan hilang saat refresh.';st(id||'#st',m,'bad');alert(m)})}
 function byName(a,b){return nameOf(a).localeCompare(nameOf(b),'id',{sensitivity:'base'})}
 function nameOf(id){var w=cfg.workers.filter(function(x){return x.id===id})[0];return w?w.name:((cfg.gone||{})[id]||'(dihapus)')}
 function isWork(k){var g=new Date(k+'T00:00:00').getDay(),n=+cfg.week||5;return n===7||(g>=1&&g<=(n===6?6:5))}
@@ -256,7 +256,7 @@ function render(){
   else if(d.leave)t.textContent='🔵 Hari ini tercatat '+(d.leave==='sick'?'Sakit':'Izin')+(d.note?': '+d.note:'')+(d.proof?' (dengan foto bukti)':'')+'.';else t.textContent='Belum check-in hari ini.';
   var showL=!!(d.in&&isLate(d.in));$('#lrw').hidden=!showL;var showO=!!(d.out&&isEarly(d.out));$('#orw').hidden=!showO;if(showO&&document.activeElement!==$('#ors'))$('#ors').value=d.onote||'';if(showL&&document.activeElement!==$('#lrs'))$('#lrs').value=d.lnote||'';
   $('#pleave').disabled=busy||!sel||!!d.in;if(!sel||d.in)$('#lw').hidden=true;$('#pin').disabled=!ok||!!d.in;$('#pout').disabled=!ok||!d.in||!!d.out;
-  if(!isAdmin)return;if(tab==='loc')initMap();
+  if(!isAdmin)return;if(tab==='loc'&&cfgReady){try{initMap()}catch(e){console.error('initMap',e)}}
   if(document.activeElement!==$('#lt'))$('#lt').value=cfg.lateAfter;if(document.activeElement!==$('#ot'))$('#ot').value=cfg.outAfter;if(document.activeElement!==$('#ob'))$('#ob').value=cfg.outBlock?'1':'0';if(document.activeElement!==$('#wwk'))$('#wwk').value=cfg.week||'5';
   if(!lt){lt=true;var u=location.origin+location.pathname;$('#qrl').textContent=u;
     try{var q=qrcode(0,'M');q.addData(u);q.make();$('#qr').innerHTML=q.createSvgTag(6,0)}catch(e){$('#qr').textContent='QR gagal dimuat. Bagikan tautannya saja.'}}
